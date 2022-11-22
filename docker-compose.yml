@@ -1,0 +1,21 @@
+version: '3.6'
+
+services:
+  # servicio REST-API
+  api:
+    build: .
+    volumes:
+      - ./log:/log
+      - ./db:/db
+    restart: always
+    environment:
+      - ENVIROMENT=prod
+    ports:
+      - "8000:8000"
+    networks:
+      - apinet
+
+networks:
+  apinet:
+    driver: bridge
+
