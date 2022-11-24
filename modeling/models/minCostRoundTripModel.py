@@ -49,9 +49,6 @@ def run_model(data: List[ProcessedAircraftData], n_best: int = 1) -> Union[Tuple
     # selection variables
     model.bs = pm.Var(indexes, domain=pm.Boolean, initialize=False)
 
-    # variable to save results:
-    model.cost = pm.Var(indexes, domain=pm.NonNegativeReals, initialize=0)
-
     # objetive function
     def calCostTotal(ac1: str, ac2: str, it_i: int, it_j: int):
         if it_i >= len(data_dict[ac1].departureItineraryArray) or it_j >= len(data_dict[ac2].returnItineraryArray):
