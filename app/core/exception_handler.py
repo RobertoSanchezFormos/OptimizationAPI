@@ -8,6 +8,8 @@ from app.common.DefaultLogger import configure_logger
 
 log = configure_logger("errors.log")
 
+INVALID_DATA_REQUEST_MSG = 'Invalid data request'
+
 
 def define_handler_exception(app: FastAPI):
     # This dispatch all general Exceptions

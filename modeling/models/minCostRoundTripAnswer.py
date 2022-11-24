@@ -10,8 +10,8 @@ class MinCostRoundTripAnswer:
     returnAircraft: str = ''
     price: str = ''
     isSameSegment: bool = ''
-    departurePath: ProcessedItinerary
-    returnPath: ProcessedItinerary
+    departurePath: ProcessedItinerary = ProcessedItinerary()
+    returnPath: ProcessedItinerary = ProcessedItinerary()
 
     def to_dict(self):
         return dict(isSuccess=self.isSuccess, msg=self.msg, departureAircraft=self.departureAircraft,

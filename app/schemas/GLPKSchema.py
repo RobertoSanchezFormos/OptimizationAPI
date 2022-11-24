@@ -36,6 +36,12 @@ class ProcessedAircraftDataSC(BaseModel):
     returnItineraryArray: List[ProcessedItinerarySC]
     processedAircraft: AircraftSC
 
+    @validator('departureItineraryArray', 'returnItineraryArray')
+    def non_empty_list(cls, value,  **kwargs):
+        if isinstance(value, list) and len(value) > 0:
+            return value
+        raise ValueError('Itinerary array cannot be empty')
+
 
 class CalendarInformationSC(BaseModel):
     processedAircraftData: List[ProcessedAircraftDataSC]

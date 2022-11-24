@@ -37,5 +37,6 @@ class ProcessedItinerary:
 
     def to_dict(self):
         return dict(key=self.key, segmentStart=self.segmentStart, segmentEnd=self.segmentEnd,
-                    preReposition=self.preReposition.to_dict(), trip=self.trip.to_dict(),
-                    posReposition=self.posReposition.to_dict())
+                    preReposition=self.preReposition.to_dict() if self.preReposition is not None else dict(),
+                    trip=self.trip.to_dict() if self.trip is not None else dict(),
+                    posReposition=self.posReposition.to_dict() if self.posReposition is not None else dict())
