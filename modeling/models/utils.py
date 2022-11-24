@@ -19,9 +19,12 @@ def dataToDict(data: List[ProcessedAircraftData]) -> dict:
 
 def generateAircraftsAndAirports(n_aircrafts, n_airports, seed=None):
     aircrafts = []
-    for i in range(n_airports):
+    if seed is not None:
+        random.seed(seed)
+
+    for i in range(n_aircrafts):
         code = f'aircraft{i}'
-        aircraft = Aircraft(aircraftCode=code, seats=5)
+        aircraft = Aircraft(aircraftCode=code, seats=randint(3, 10))
         aircrafts.append(aircraft)
 
     airports = [f'airport{i}' for i in range(n_airports)]

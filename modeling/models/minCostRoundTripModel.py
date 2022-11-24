@@ -91,6 +91,17 @@ def run_model(data: List[ProcessedAircraftData], n_best: int = 1) -> Union[Tuple
 
     model.nonFeasibleRoundTrip = pm.Constraint(indexes, rule=nonFeasibleRoundTrip)
 
+    # The next trip should have greater or equal number of seats:
+    def nonSeats(m, ac1: str, ac2: str, it_i: int, it_j: int):
+        if it_i < len(data_dict[ac1].departureItineraryArray) and it_j < len(data_dict[ac2].returnItineraryArray):
+            departure_seats = data_dict[ac1].processedAircraft.seats
+            return_seats = data_dict[ac2].processedAircraft.seats
+            if departure_seats - return_seats > 0:      # there is no room for other passenger
+                return m.bs[ac1, ac2, it_i, it_j] == 0
+        return pm.Constraint.Skip
+
+    model.nonSeats = pm.Constraint(indexes, rule=nonSeats)
+
     solver = pm.SolverFactory('glpk')
     solver_results = solver.solve(model)
     summary = get_final_results(solver_results, model, cost_data, data_dict)

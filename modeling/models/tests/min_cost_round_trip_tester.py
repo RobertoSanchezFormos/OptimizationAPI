@@ -12,7 +12,7 @@ seed = 77
 
 
 def test():
-    aircrafts, airport_names = generateAircraftsAndAirports(n_aircrafts, n_airports)
+    aircrafts, airport_names = generateAircraftsAndAirports(n_aircrafts, n_airports, seed=seed)
     start_hour = dt.timedelta(hours=6)  # from 6 am
     end_hour = dt.timedelta(hours=20)  # to 20 pm
     itinerary_gen = ItineraryGenerator(aircrafts=aircrafts, airport_names=airport_names, n_days=n_days,
