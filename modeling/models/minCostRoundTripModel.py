@@ -13,17 +13,15 @@ model_name = 'minCostRoundTripModel v1.0'
 
 
 def calCostWithDetails(departure: ProcessedItinerary, back: ProcessedItinerary):
-    is_same_segment = False
     if departure.key == back.key:
         # this implies two itineraries that belong to the same segment:
         # This simplifies: x->e, e->f, f->y | y->f, f->e, e->z
         # to:    x->e, e->f |  f->e, e->z
         cost = departure.preTripPrice() + back.tripPosPrice()
-        is_same_segment = True
     else:
         cost = departure.preTripPosPrice() + back.preTripPosPrice()
 
-    return dict(cost=cost, isSameSegment=is_same_segment)
+    return dict(cost=cost, isSameSegment=departure.key == back.key)
 
 
 def run_model(data: List[ProcessedAircraftData], n_best: int = 1) -> Union[Tuple[None, None, None],
@@ -81,11 +79,19 @@ def run_model(data: List[ProcessedAircraftData], n_best: int = 1) -> Union[Tuple
     # Only feasible round trips
     def nonFeasibleRoundTrip(m, ac1: str, ac2: str, it_i: int, it_j: int):
         if it_i < len(data_dict[ac1].departureItineraryArray) and it_j < len(data_dict[ac2].returnItineraryArray):
-            departure_itinerary = data_dict[ac1].departureItineraryArray[it_i]
-            return_itinerary = data_dict[ac2].returnItineraryArray[it_j]
+            # only for valid indexes:
+            departure_itinerary: ProcessedItinerary = data_dict[ac1].departureItineraryArray[it_i]
+            return_itinerary: ProcessedItinerary = data_dict[ac2].returnItineraryArray[it_j]
 
-            if departure_itinerary.segmentEnd > return_itinerary.segmentStart:
+            if departure_itinerary.key == return_itinerary.key:
+                # they belong to the same segment:
+                if departure_itinerary.trip.end_time > return_itinerary.trip.start_time:
+                    # this schedule does not fit
+                    return m.bs[ac1, ac2, it_i, it_j] == 0
+            elif departure_itinerary.segmentEnd > return_itinerary.segmentStart:
+                # different segments and schedule does not fit
                 return m.bs[ac1, ac2, it_i, it_j] == 0
+        # any other case is omitted
         return pm.Constraint.Skip
 
     model.nonFeasibleRoundTrip = pm.Constraint(indexes, rule=nonFeasibleRoundTrip)
@@ -93,10 +99,13 @@ def run_model(data: List[ProcessedAircraftData], n_best: int = 1) -> Union[Tuple
     # The next trip should have greater or equal number of seats:
     def nonSeats(m, ac1: str, ac2: str, it_i: int, it_j: int):
         if it_i < len(data_dict[ac1].departureItineraryArray) and it_j < len(data_dict[ac2].returnItineraryArray):
+            # only for valid indexes:
             departure_seats = data_dict[ac1].processedAircraft.seats
             return_seats = data_dict[ac2].processedAircraft.seats
-            if departure_seats - return_seats > 0:      # there is no room for other passenger
+            if departure_seats - return_seats > 0:
+                # there is no room for other passenger
                 return m.bs[ac1, ac2, it_i, it_j] == 0
+        # any other case is omitted
         return pm.Constraint.Skip
 
     model.nonSeats = pm.Constraint(indexes, rule=nonSeats)
