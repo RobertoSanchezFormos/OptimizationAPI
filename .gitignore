@@ -1,1 +1,4 @@
 /app/app.db
+/db/app_dev.db
+/log/
+/venv/
