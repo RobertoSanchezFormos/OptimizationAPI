@@ -1,3 +1,6 @@
+from pydantic.main import BaseModel
+
+
 class Aircraft:
     aircraftCode: str = None
     seats: int = 0

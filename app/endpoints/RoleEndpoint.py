@@ -9,7 +9,7 @@ from app.services import RoleService, UserService
 
 router = APIRouter(
     prefix="/role",
-    tags=["role"],
+    tags=["admin"],
     responses={404: {"description": "Not found"}},
 )
 

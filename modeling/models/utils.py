@@ -9,6 +9,9 @@ import pyomo.environ as pm
 from modeling.classes.Aircraft import Aircraft
 from modeling.classes.ProcessedAircraftData import ProcessedAircraftData
 
+NON_SUCCESSFUL_SOLVER_SOLUTION_MSG = 'There is no optimal solution for this problem.'
+SUCCESSFUL_SOLVER_SOLUTION_MSG = 'Optimal solution found'
+
 
 def dataToDict(data: List[ProcessedAircraftData]) -> dict:
     resp = dict()

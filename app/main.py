@@ -7,7 +7,7 @@ from app.core.config import settings
 from app.core.exception_handler import define_handler_exception
 
 # import endpoints
-from app.endpoints import UserEndpoint, RoleEndpoint
+from app.endpoints import UserEndpoint, RoleEndpoint, GLPKEndpoint
 
 # import database models:
 from app.db.session import engine
@@ -16,8 +16,9 @@ from app.db.base import DBBaseClass
 
 def include_routes(app):
     # To include EndPoints:
-    app.include_router(UserEndpoint.router)
-    app.include_router(RoleEndpoint.router)
+    # app.include_router(UserEndpoint.router)
+    # app.include_router(RoleEndpoint.router)
+    app.include_router(GLPKEndpoint.router)
 
 
 def create_tables():

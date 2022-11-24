@@ -1,5 +1,6 @@
 from typing import List
 
+
 from modeling.classes.Aircraft import Aircraft
 from modeling.classes.ProcessedItinerary import ProcessedItinerary
 
@@ -12,8 +13,12 @@ class ProcessedAircraftData:
     def __init__(self, **kwargs):
         for key, value in kwargs.items():
             setattr(self, key, value)
-        self.departureItineraryArray = list()
-        self.returnItineraryArray = list()
+        if len(self.departureItineraryArray) > 0 and isinstance(self.departureItineraryArray[0], dict):
+            self.departureItineraryArray = [ProcessedItinerary(**d) for d in self.departureItineraryArray]
+        if len(self.returnItineraryArray) > 0 and isinstance(self.returnItineraryArray[0], dict):
+            self.returnItineraryArray = [ProcessedItinerary(**d) for d in self.returnItineraryArray]
+        if isinstance(self.processedAircraft, dict):
+            self.processedAircraft = Aircraft(**self.processedAircraft)
 
     def __str__(self, ):
         dep = '\n'.join(str(x) for x in self.departureItineraryArray)

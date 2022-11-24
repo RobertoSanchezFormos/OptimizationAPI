@@ -5,7 +5,9 @@ from pyomo.opt import SolverResults
 
 from modeling.classes.ProcessedAircraftData import ProcessedAircraftData
 from modeling.classes.ProcessedItinerary import ProcessedItinerary
-from modeling.models.utils import dataToDict, is_valid_solution
+from modeling.models.minCostRoundTripAnswer import MinCostRoundTripAnswer
+from modeling.models.utils import dataToDict, is_valid_solution, NON_SUCCESSFUL_SOLVER_SOLUTION_MSG, \
+    SUCCESSFUL_SOLVER_SOLUTION_MSG
 
 model_name = 'minCostRoundTripModel v1.0'
 
@@ -25,7 +27,7 @@ def calCostWithDetails(departure: ProcessedItinerary, back: ProcessedItinerary):
 
 
 def run_model(data: List[ProcessedAircraftData], n_best: int = 1) -> Union[Tuple[None, None, None],
-                                                                           Tuple[SolverResults, ConcreteModel, dict]]:
+                                                                           Tuple[SolverResults, ConcreteModel, list]]:
     """ PREPARE INFORMATION """
     data_dict = dataToDict(data)
     aircrafts = list(data_dict.keys())
@@ -106,16 +108,28 @@ def run_model(data: List[ProcessedAircraftData], n_best: int = 1) -> Union[Tuple
     return solver_results, model, summary
 
 
-def get_final_results(solver_results, model, cost_data, data_dict):
+def get_final_results(solver_results, model, cost_data, data_dict) -> List[MinCostRoundTripAnswer]:
     resp = list()
-    if is_valid_solution(solver_results):
+    success = is_valid_solution(solver_results)
+    if not success:
+        answer = MinCostRoundTripAnswer()
+        answer.isSuccess = success
+        answer.msg = NON_SUCCESSFUL_SOLVER_SOLUTION_MSG
+        return [answer]
+
+    if success:
         for v in model.component_data_objects(pm.Var):
             if v.domain == pm.Boolean and v.value > 0:
                 v_dict = cost_data[v.name]
                 ac1, it_i, ac2, it_j = v_dict['ac1'], v_dict['it_i'], v_dict['ac2'], v_dict['it_j']
-                departure = data_dict[ac1].departureItineraryArray[it_i]
-                back = data_dict[ac2].departureItineraryArray[it_j]
-                v_dict['departure'] = departure
-                v_dict['back'] = back
-                resp.append(cost_data[v.name])
+                answer = MinCostRoundTripAnswer()
+                answer.isSuccess = success
+                answer.msg = SUCCESSFUL_SOLVER_SOLUTION_MSG
+                answer.departurePath = data_dict[ac1].departureItineraryArray[it_i]
+                answer.returnPath = data_dict[ac2].departureItineraryArray[it_j]
+                answer.departureAircraft = ac1
+                answer.returnAircraft = ac2
+                answer.price = cost_data[v.name]['cost']['cost']
+                answer.isSameSegment = cost_data[v.name]['cost']['isSameSegment']
+                resp.append(answer)
     return resp

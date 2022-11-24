@@ -1,3 +1,5 @@
+from pydantic.main import BaseModel
+
 from modeling.classes.Flight import Flight
 
 
@@ -12,6 +14,12 @@ class ProcessedItinerary:
     def __init__(self, **kwargs):
         for key, value in kwargs.items():
             setattr(self, key, value)
+        if isinstance(self.preReposition, dict):
+            self.preReposition = Flight(**self.preReposition)
+        if isinstance(self.trip, dict):
+            self.trip = Flight(**self.trip)
+        if isinstance(self.posReposition, dict):
+            self.posReposition = Flight(**self.posReposition)
 
     def preTripPrice(self, ):
         return self.preReposition.price + self.trip.price
@@ -26,3 +34,8 @@ class ProcessedItinerary:
         return f'..{str(self.key)[-3:]}: {self.preReposition} {self.trip} {self.posReposition} : ' \
                f'({round(self.segmentStart, 0)}, {round(self.segmentEnd, 0)}) ' \
                f'= {round(self.preTripPosPrice(), 2)}'
+
+    def to_dict(self):
+        return dict(key=self.key, segmentStart=self.segmentStart, segmentEnd=self.segmentEnd,
+                    preReposition=self.preReposition.to_dict(), trip=self.trip.to_dict(),
+                    posReposition=self.posReposition.to_dict())
