@@ -4,7 +4,7 @@ from typing import List
 import pandas as pd
 import datetime as dt
 
-from pyomo.core import Constraint
+import pyomo.environ as pm
 
 from modeling.classes.Aircraft import Aircraft
 from modeling.classes.ProcessedAircraftData import ProcessedAircraftData
@@ -109,11 +109,25 @@ def generateDayValidPeriodsPerDay(n_days,
     return df_days
 
 
-def print_results(results, model, print_model: bool = False):
-    print(results['Solver'][0])
-    if results['Solver'][0]['Termination condition'] == 'optimal':
+def is_valid_solution(solver_results):
+    return solver_results['Solver'][0]['Termination condition'] == 'optimal'
+
+
+def print_results(solver_results, model, print_model: bool = False):
+    print(solver_results['Solver'][0])
+    if is_valid_solution(solver_results):
         if print_model:
-            model.pprint()
+            model.display()
+        n_boolean = 0
+        print('# ==========================================================\nSelected solution:')
+        print('Variables:')
+        for v in model.component_data_objects(pm.Var):
+            if v.domain == pm.Boolean:
+                if v.value < 1 or print(str(v), v.value):
+                    n_boolean += 1
+
+        print(f'\nA total of {n_boolean} boolean variables are False')
+
     else:
-        for c in model.component_objects(ctype=Constraint):
+        for c in model.component_objects(ctype=pm.Constraint):
             print(c.display())

@@ -10,4 +10,5 @@ class Flight:
             setattr(self, key, value)
 
     def __str__(self, ):
-        return f'({self.start_time},{self.end_time}) {self.fromAirport} -> {self.toAirport}: {round(self.price, 2)}  | '
+        return f'({round(self.start_time,0)},{round(self.end_time,0)}) {self.fromAirport} -> ' \
+               f'{self.toAirport}: {round(self.price, 2)} | '

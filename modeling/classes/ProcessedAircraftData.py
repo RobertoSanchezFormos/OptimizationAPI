@@ -14,3 +14,8 @@ class ProcessedAircraftData:
             setattr(self, key, value)
         self.departureItineraryArray = list()
         self.returnItineraryArray = list()
+
+    def __str__(self, ):
+        dep = '\n'.join(str(x) for x in self.departureItineraryArray)
+        back = '\n'.join(str(x) for x in self.returnItineraryArray)
+        return f"departure:\n{dep} \nreturn:\n{back}"

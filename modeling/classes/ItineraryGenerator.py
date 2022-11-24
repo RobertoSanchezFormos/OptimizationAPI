@@ -38,6 +38,7 @@ class ItineraryGenerator:
         self.df_days = generateDayValidPeriodsPerDay(n_days, start_hour, end_hour)
         self.tv_i = int(start_hour.total_seconds() / 60)
         self.tv_f = int(end_hour.total_seconds() / 60)
+        self.last_picket_airport = ''
 
     def createItinerary(self, ac: str, px: str, pe: str, pf: str, py: str, t_ini: int, key=None):
         if key is None:
@@ -60,6 +61,7 @@ class ItineraryGenerator:
     def selectRandomAirport(self, ):
         if self.seed is not None:
             random.seed(self.seed)
+        self.seed += random.randint(1, 50)
         return self.airportNames[random.randint(1, 50) % len(self.airportNames)]
 
     def generateTimeInitialAndPositions(self, t_disp_ini):
@@ -85,7 +87,7 @@ class ItineraryGenerator:
 
                 t_ini, pos_ini, pos_fin = self.generateTimeInitialAndPositions(departure_itinerary.segmentEnd)
                 return_itinerary = self.createItinerary(ac=ac, px=pos_ini,
-                                                        pe=from_airport, pf=to_airport, py=pos_fin, t_ini=t_ini,
+                                                        pe=to_airport, pf=from_airport, py=pos_fin, t_ini=t_ini,
                                                         key=f"{key}")
                 aircraft_case.departureItineraryArray.append(departure_itinerary)
                 aircraft_case.returnItineraryArray.append(return_itinerary)
@@ -102,7 +104,7 @@ class ItineraryGenerator:
                 else:
                     t_ini, pos_ini, pos_fin = self.generateTimeInitialAndPositions(self.df_days['ini'].loc[d])
                     return_itinerary = self.createItinerary(ac=ac, px=pos_ini,
-                                                            pe=from_airport, pf=to_airport, py=pos_fin,
+                                                            pe=to_airport, pf=from_airport, py=pos_fin,
                                                             t_ini=t_ini,
                                                             key=f"{key}")
                     aircraft_case.returnItineraryArray.append(return_itinerary)

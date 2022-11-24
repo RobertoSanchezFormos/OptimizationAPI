@@ -23,5 +23,6 @@ class ProcessedItinerary:
         return self.preReposition.price + self.trip.price + self.posReposition.price
 
     def __str__(self, ):
-        return f'{self.key}: {self.preReposition} {self.trip} {self.posReposition} : ' \
-               f'({round(self.segmentStart, 2)}, {round(self.segmentEnd, 2)}) '
+        return f'..{str(self.key)[-3:]}: {self.preReposition} {self.trip} {self.posReposition} : ' \
+               f'({round(self.segmentStart, 0)}, {round(self.segmentEnd, 0)}) ' \
+               f'= {round(self.preTripPosPrice(), 2)}'
