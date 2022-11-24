@@ -24,7 +24,7 @@ def test():
     for case in study_case:
         print(case.processedAircraft)
         print(case)
-    solver_results, model, summary_dict = minCostRoundTripModel.run_model(study_case, 1)
+    solver_results, model, summary_dict = minCostRoundTripModel.run_model(study_case, n_best=1)
 
     if solver_results is None:
         print('======\n\nERROR: Invalid data for this study case.')
