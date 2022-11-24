@@ -1,6 +1,6 @@
 from typing import List
 
-from pydantic import BaseModel
+from pydantic import BaseModel, validator
 
 
 class AircraftSC(BaseModel):
@@ -14,6 +14,12 @@ class FlightSC(BaseModel):
     price: float
     start_time: int
     end_time: int
+
+    @validator('end_time')
+    def end_time_must_be_greater_that_start_time(cls, end_time, values,  **kwargs):
+        if values['start_time'] < end_time:
+            return end_time
+        raise ValueError('end_time should be greater than start_time')
 
 
 class ProcessedItinerarySC(BaseModel):
