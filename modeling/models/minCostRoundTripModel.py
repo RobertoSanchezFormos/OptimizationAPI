@@ -14,7 +14,7 @@ model_name = 'minCostRoundTripModel v1.0'
 
 def calCostWithDetails(departure_itinerary: ProcessedItinerary, return_itinerary: ProcessedItinerary):
     is_same_segment_or_continuous = departure_itinerary.key == return_itinerary.key or \
-                                return_itinerary.isNextPossibleSegmentOf(departure_itinerary)
+                                    return_itinerary.isNextPossibleSegmentOf(departure_itinerary)
     if is_same_segment_or_continuous:
         # this implies either these two itineraries belong to the same segment or they are continuous
         # therefore the following simplification applies.
@@ -147,4 +147,5 @@ def get_final_results(solver_results, model, cost_data, data_dict) -> List[MinCo
                 answer.price = v_dict['resp']['cost']
                 answer.isSameSegmentOrContinuous = v_dict['resp']['isSameSegmentOrContinuous']
                 resp.append(answer)
+        resp.sort(key=lambda x: x.price)
     return resp
