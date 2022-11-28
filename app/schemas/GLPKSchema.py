@@ -17,14 +17,13 @@ class FlightSC(ORMBaselModel):
     fromAirport: str
     toAirport: str
     price: float
-    start_time: int
-    end_time: int
+    timeInMin: int
 
-    @validator('end_time')
-    def end_time_must_be_greater_that_start_time(cls, end_time, values, **kwargs):
-        if values['start_time'] < end_time:
-            return end_time
-        raise ValueError('end_time should be greater than start_time')
+    @validator('timeInMin')
+    def time_in_min_must_be_greater_equal_to_zero(cls, time_in_min, **kwargs):
+        if time_in_min >= 0:
+            return time_in_min
+        raise ValueError('timeInMin should be greater or equal to zero')
 
 
 class ProcessedItinerarySC(ORMBaselModel):
@@ -58,6 +57,6 @@ class MinCostRoundTripAnswerSC(ORMBaselModel):
     departureAircraft: str = ''
     returnAircraft: str = ''
     price: str = ''
-    isSameSegment: bool = ''
+    isSameSegmentOrContinuous: bool = False
     departurePath: ProcessedItinerarySC
     returnPath: ProcessedItinerarySC

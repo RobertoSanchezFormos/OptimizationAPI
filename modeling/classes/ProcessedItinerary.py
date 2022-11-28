@@ -1,5 +1,4 @@
-from pydantic.main import BaseModel
-
+from typing import List, Self
 from modeling.classes.Flight import Flight
 
 
@@ -10,6 +9,8 @@ class ProcessedItinerary:
     preReposition: Flight = None
     trip: Flight = None
     posReposition: Flight = None
+    segmentTimeInMin: int = None
+    nextPossibleSegments: List[str] = list()
 
     def __init__(self, **kwargs):
         for key, value in kwargs.items():
@@ -20,6 +21,13 @@ class ProcessedItinerary:
             self.trip = Flight(**self.trip)
         if isinstance(self.posReposition, dict):
             self.posReposition = Flight(**self.posReposition)
+        if self.segmentEnd - self.segmentStart > 0:
+            self.segmentTimeInMin = self.segmentEnd - self.segmentStart
+        else:
+            raise Exception(f"Invalid object for Processed Itinerary: segmentTimeInMin must be greater than zero, "
+                            f"this means: segmentEnd - segmentStart > 0"
+                            f"{self.segmentEnd} - {self.segmentStart} = "
+                            f"{self.segmentEnd - self.segmentStart}")
 
     def preTripPrice(self, ):
         return self.preReposition.price + self.trip.price
@@ -29,6 +37,18 @@ class ProcessedItinerary:
 
     def preTripPosPrice(self, ):
         return self.preReposition.price + self.trip.price + self.posReposition.price
+
+    def preTripTimeInMin(self, ):
+        return self.preReposition.timeInMin + self.trip.timeInMin
+
+    def tripPosTimeInMin(self, ):
+        return self.trip.timeInMin + self.posReposition.timeInMin
+
+    def preTripPosTimeInMin(self, ):
+        return self.preReposition.timeInMin + self.trip.timeInMin + self.posReposition.timeInMin
+
+    def isNextPossibleSegmentOf(self, to_evaluate: Self):
+        return self.key in to_evaluate.nextPossibleSegments
 
     def __str__(self, ):
         return f'..{str(self.key)[-3:]}: {self.preReposition} {self.trip} {self.posReposition} : ' \

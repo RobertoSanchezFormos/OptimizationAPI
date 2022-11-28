@@ -50,11 +50,9 @@ class ItineraryGenerator:
         pre_price = self.cost_dict[ac][px][pe]
         trip_price = self.cost_dict[ac][pe][pf]
         post_price = self.cost_dict[ac][pf][py]
-        pre_flight = Flight(fromAirport=px, toAirport=pe, price=pre_price, start_time=t_ini, end_time=t_ini + txe)
-        trip_flight = Flight(fromAirport=pe, toAirport=pf, price=trip_price, start_time=t_ini + txe,
-                             end_time=t_ini + txe + tef)
-        post_flight = Flight(fromAirport=pf, toAirport=py, price=post_price, start_time=t_ini + txe + tef,
-                             end_time=t_ini + total_time)
+        pre_flight = Flight(fromAirport=px, toAirport=pe, price=pre_price, timeInMin=txe)
+        trip_flight = Flight(fromAirport=pe, toAirport=pf, price=trip_price, timeInMin=tef)
+        post_flight = Flight(fromAirport=pf, toAirport=py, price=post_price, timeInMin=tfy)
         return ProcessedItinerary(key=key, segmentStart=t_ini, segmentEnd=t_ini + total_time,
                                   preReposition=pre_flight, trip=trip_flight, posReposition=post_flight)
 

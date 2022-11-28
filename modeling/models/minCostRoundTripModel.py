@@ -12,16 +12,19 @@ from modeling.models.utils import dataToDict, is_valid_solution, NON_SUCCESSFUL_
 model_name = 'minCostRoundTripModel v1.0'
 
 
-def calCostWithDetails(departure: ProcessedItinerary, back: ProcessedItinerary):
-    if departure.key == back.key:
-        # this implies two itineraries that belong to the same segment:
+def calCostWithDetails(departure_itinerary: ProcessedItinerary, return_itinerary: ProcessedItinerary):
+    is_same_segment_or_continuous = departure_itinerary.key == return_itinerary.key or \
+                                return_itinerary.isNextPossibleSegmentOf(departure_itinerary)
+    if is_same_segment_or_continuous:
+        # this implies either these two itineraries belong to the same segment or they are continuous
+        # therefore the following simplification applies.
         # This simplifies: x->e, e->f, f->y | y->f, f->e, e->z
-        # to:    x->e, e->f |  f->e, e->z
-        cost = departure.preTripPrice() + back.tripPosPrice()
+        # with this:    x->e, e->f |  f->e, e->z
+        cost = departure_itinerary.preTripPrice() + return_itinerary.tripPosPrice()
     else:
-        cost = departure.preTripPosPrice() + back.preTripPosPrice()
+        cost = departure_itinerary.preTripPosPrice() + return_itinerary.preTripPosPrice()
 
-    return dict(cost=cost, isSameSegment=departure.key == back.key)
+    return dict(cost=cost, isSameSegmentOrContinuous=is_same_segment_or_continuous)
 
 
 def run_model(data: List[ProcessedAircraftData], n_best: int = 1) -> Union[Tuple[None, None, None],
@@ -54,10 +57,10 @@ def run_model(data: List[ProcessedAircraftData], n_best: int = 1) -> Union[Tuple
         if it_i >= len(data_dict[ac1].departureItineraryArray) or it_j >= len(data_dict[ac2].returnItineraryArray):
             # this prevents outside of index
             return 0
-        cost = calCostWithDetails(departure=data_dict[ac1].departureItineraryArray[it_i],
-                                  back=data_dict[ac2].returnItineraryArray[it_j])
-        cost_data[model.bs[ac1, ac2, it_i, it_j].name] = dict(ac1=ac1, ac2=ac2, it_i=it_i, it_j=it_j, cost=cost)
-        return model.bs[ac1, ac2, it_i, it_j] * cost['cost']
+        resp = calCostWithDetails(departure_itinerary=data_dict[ac1].departureItineraryArray[it_i],
+                                  return_itinerary=data_dict[ac2].returnItineraryArray[it_j])
+        cost_data[model.bs[ac1, ac2, it_i, it_j].name] = dict(ac1=ac1, ac2=ac2, it_i=it_i, it_j=it_j, resp=resp)
+        return model.bs[ac1, ac2, it_i, it_j] * resp['cost']
 
     objective = sum(calCostTotal(a1, a2, i, j) for a1, a2, i, j in indexes)
     model.objective = pm.Objective(expr=objective, sense=pm.minimize)
@@ -84,12 +87,12 @@ def run_model(data: List[ProcessedAircraftData], n_best: int = 1) -> Union[Tuple
             return_itinerary: ProcessedItinerary = data_dict[ac2].returnItineraryArray[it_j]
 
             if departure_itinerary.key == return_itinerary.key:
-                # they belong to the same segment:
-                if departure_itinerary.trip.end_time > return_itinerary.trip.start_time:
+                # they belong to the same segment: pre + trip + pos should be inside the segment
+                if departure_itinerary.preTripTimeInMin() + return_itinerary.tripPosTimeInMin() < return_itinerary.segmentTimeInMin:
                     # this schedule does not fit
                     return m.bs[ac1, ac2, it_i, it_j] == 0
             elif departure_itinerary.segmentEnd > return_itinerary.segmentStart:
-                # different segments and schedule does not fit
+                # different segments and schedule does not fit since return starts before the departure
                 return m.bs[ac1, ac2, it_i, it_j] == 0
         # any other case is omitted
         return pm.Constraint.Skip
@@ -102,7 +105,7 @@ def run_model(data: List[ProcessedAircraftData], n_best: int = 1) -> Union[Tuple
             # only for valid indexes:
             departure_seats = data_dict[ac1].processedAircraft.seats
             return_seats = data_dict[ac2].processedAircraft.seats
-            if departure_seats - return_seats > 0:
+            if return_seats - departure_seats < 0:
                 # there is no room for other passenger
                 return m.bs[ac1, ac2, it_i, it_j] == 0
         # any other case is omitted
@@ -138,7 +141,7 @@ def get_final_results(solver_results, model, cost_data, data_dict) -> List[MinCo
                 answer.returnPath = data_dict[ac2].departureItineraryArray[it_j]
                 answer.departureAircraft = ac1
                 answer.returnAircraft = ac2
-                answer.price = cost_data[v.name]['cost']['cost']
-                answer.isSameSegment = cost_data[v.name]['cost']['isSameSegment']
+                answer.price = v_dict['resp']['cost']
+                answer.isSameSegment = v_dict['resp']['isSameSegmentOrContinuous']
                 resp.append(answer)
     return resp
