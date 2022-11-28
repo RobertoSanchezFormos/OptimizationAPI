@@ -7,7 +7,7 @@ from modeling.models.utils import generateAircraftsAndAirports, generateParamete
 
 n_aircrafts = 3
 n_airports = 5
-n_days = 3
+n_days = 5
 seed = 77
 
 
@@ -24,13 +24,15 @@ def test():
     for case in study_case:
         print(case.processedAircraft)
         print(case)
-    solver_results, model, summary_dict = minCostRoundTripModel.run_model(study_case, n_best=1)
+    solver_results, model, summary_list = minCostRoundTripModel.run_model(study_case, n_best=1)
 
     if solver_results is None:
         print('======\n\nERROR: Invalid data for this study case.')
     else:
-        print_results(solver_results, model, print_model=True)
-        print(summary_dict)
+        print_results(solver_results, model, print_model=False)
+        for ix, summary in enumerate(summary_list):
+            print(f'# ==========================================================\nSolution {ix+1}')
+            print(summary)
 
 
 if __name__ == "__main__":

@@ -40,7 +40,8 @@ def run_model(data: List[ProcessedAircraftData], n_best: int = 1) -> Union[Tuple
         return None, None, None
 
     indexes = [(a1, a2, i, j) for a1 in aircrafts for a2 in aircrafts for i in range(n_departure) for j in
-               range(n_return) if i <= j]
+               range(n_return) if i < len(data_dict[a1].departureItineraryArray)
+               and j < len(data_dict[a2].returnItineraryArray)]
 
     """ TO SAVE INFORMATION """
     cost_data = dict()
@@ -57,6 +58,8 @@ def run_model(data: List[ProcessedAircraftData], n_best: int = 1) -> Union[Tuple
         if it_i >= len(data_dict[ac1].departureItineraryArray) or it_j >= len(data_dict[ac2].returnItineraryArray):
             # this prevents outside of index
             return 0
+        if ac1 == 'aircraft0' and ac2 == 'aircraft2' and it_i == 3 and it_j == 0:
+            print('stop')
         resp = calCostWithDetails(departure_itinerary=data_dict[ac1].departureItineraryArray[it_i],
                                   return_itinerary=data_dict[ac2].returnItineraryArray[it_j])
         cost_data[model.bs[ac1, ac2, it_i, it_j].name] = dict(ac1=ac1, ac2=ac2, it_i=it_i, it_j=it_j, resp=resp)
@@ -138,10 +141,10 @@ def get_final_results(solver_results, model, cost_data, data_dict) -> List[MinCo
                 answer.isSuccess = success
                 answer.msg = SUCCESSFUL_SOLVER_SOLUTION_MSG
                 answer.departurePath = data_dict[ac1].departureItineraryArray[it_i]
-                answer.returnPath = data_dict[ac2].departureItineraryArray[it_j]
+                answer.returnPath = data_dict[ac2].returnItineraryArray[it_j]
                 answer.departureAircraft = ac1
                 answer.returnAircraft = ac2
                 answer.price = v_dict['resp']['cost']
-                answer.isSameSegment = v_dict['resp']['isSameSegmentOrContinuous']
+                answer.isSameSegmentOrContinuous = v_dict['resp']['isSameSegmentOrContinuous']
                 resp.append(answer)
     return resp
