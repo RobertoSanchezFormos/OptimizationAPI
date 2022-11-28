@@ -1,5 +1,6 @@
 import uvicorn
 from fastapi import FastAPI
+from starlette.middleware.cors import CORSMiddleware
 
 # import general settings
 from app.core.log_after_request import log_after_request
@@ -36,6 +37,15 @@ def define_loggers(app):
 
 def create_application() -> FastAPI:
     app = FastAPI(title=settings.PROJECT_NAME, version=settings.PROJECT_VERSION)
+    # allows CORS:
+    origins = ["*"]
+    app.add_middleware(
+        CORSMiddleware,
+        allow_origins=origins,
+        allow_credentials=True,
+        allow_methods=["*"],
+        allow_headers=["*"],
+    )
     define_loggers(app)
     include_routes(app)
     create_tables()
