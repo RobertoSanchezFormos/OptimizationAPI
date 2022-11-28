@@ -40,13 +40,17 @@ class ItineraryGenerator:
         self.tv_f = int(end_hour.total_seconds() / 60)
         self.last_picket_airport = ''
 
-    def createItinerary(self, ac: str, px: str, pe: str, pf: str, py: str, t_ini: int, key=None):
+    def createItinerary(self, ac: str, px: str, pe: str, pf: str, py: str, t_ini: int, t_free: int, key=None,
+                        next_possible_segments=None):
+        if next_possible_segments is None:
+            next_possible_segments = []
+
         if key is None:
             key = f"{uuid4()}"
         txe = self.time_dict[ac][px][pe]
         tef = self.time_dict[ac][pe][pf]
         tfy = self.time_dict[ac][pf][py]
-        total_time = txe + tef + tfy
+        total_time = txe + tef + tfy + t_free
         pre_price = self.cost_dict[ac][px][pe]
         trip_price = self.cost_dict[ac][pe][pf]
         post_price = self.cost_dict[ac][pf][py]
@@ -54,7 +58,8 @@ class ItineraryGenerator:
         trip_flight = Flight(fromAirport=pe, toAirport=pf, price=trip_price, timeInMin=tef)
         post_flight = Flight(fromAirport=pf, toAirport=py, price=post_price, timeInMin=tfy)
         return ProcessedItinerary(key=key, segmentStart=t_ini, segmentEnd=t_ini + total_time,
-                                  preReposition=pre_flight, trip=trip_flight, posReposition=post_flight)
+                                  preReposition=pre_flight, trip=trip_flight, posReposition=post_flight,
+                                  nextPossibleSegments=next_possible_segments)
 
     def selectRandomAirport(self, ):
         if self.seed is not None:
@@ -68,43 +73,61 @@ class ItineraryGenerator:
         t_ini = t_disp_ini + randint(0, int((self.tv_f - self.tv_i) / 10))
         pos_ini = self.selectRandomAirport()
         pos_fin = self.selectRandomAirport()
-        return t_ini, pos_ini, pos_fin
+        t_free = t_disp_ini + randint(0, int((self.tv_f - self.tv_i) / 2))
+        return t_ini, pos_ini, pos_fin, t_free
 
     def generateAircraftCase(self, aircraft_case: ProcessedAircraftData, ac, from_airport, to_airport):
         if self.seed is not None:
             random.seed(self.seed)
 
+        continuous_segments_ids = list()
+        origen_continuous, destiny_continuous = self.selectRandomAirport(), self.selectRandomAirport()
         for d in self.df_days.index:
             key = uuid4()
-            if randint(1, 1000) % 2 == 0:
-                # in the same segment
-                t_ini, pos_ini, pos_fin = self.generateTimeInitialAndPositions(self.df_days['ini'].loc[d])
-                departure_itinerary = self.createItinerary(ac=ac, px=pos_ini,
-                                                           pe=from_airport, pf=to_airport, py=pos_fin, t_ini=t_ini,
-                                                           key=f"{key}")
+            if randint(1, 1000) % 2 == 0 and len(continuous_segments_ids) == 0:
+                # generate continuous segments
+                continuous_segments_ids = [f"{key}"] + [f'{uuid4()}' for _ in range(1, 3)]
+                origen_continuous, destiny_continuous = self.selectRandomAirport(), self.selectRandomAirport()
 
-                t_ini, pos_ini, pos_fin = self.generateTimeInitialAndPositions(departure_itinerary.segmentEnd)
-                return_itinerary = self.createItinerary(ac=ac, px=pos_ini,
-                                                        pe=to_airport, pf=from_airport, py=pos_fin, t_ini=t_ini,
-                                                        key=f"{key}")
+            if len(continuous_segments_ids) > 0:
+                # generate continuous segments
+                _key = continuous_segments_ids[0]
+
+                t_ini, pos_ini, pos_fin, t_free = self.generateTimeInitialAndPositions(self.df_days['ini'].loc[d])
+                departure_itinerary = self.createItinerary(ac=ac, px=origen_continuous,
+                                                           pe=from_airport, pf=to_airport,
+                                                           py=destiny_continuous, t_ini=t_ini, t_free=t_free,
+                                                           key=f"{_key}", next_possible_segments=continuous_segments_ids)
+
+                return_itinerary = self.createItinerary(ac=ac, px=origen_continuous,
+                                                        pe=to_airport, pf=from_airport,
+                                                        py=destiny_continuous, t_ini=t_ini, t_free=t_free,
+                                                        key=f"{_key}", next_possible_segments=continuous_segments_ids)
+                # for the next continuous segments
+                continuous_segments_ids = continuous_segments_ids[1:]
+
                 aircraft_case.departureItineraryArray.append(departure_itinerary)
                 aircraft_case.returnItineraryArray.append(return_itinerary)
 
             else:
                 # in different segments:
-                if randint(1, 1000) % 2 == 0:
-                    t_ini, pos_ini, pos_fin = self.generateTimeInitialAndPositions(self.df_days['ini'].loc[d])
-                    departure_itinerary = self.createItinerary(ac=ac, px=pos_ini,
-                                                               pe=from_airport, pf=to_airport, py=pos_fin,
-                                                               t_ini=t_ini,
-                                                               key=f"{key}")
+                t_ini, pos_ini, pos_fin, t_free = self.generateTimeInitialAndPositions(self.df_days['ini'].loc[d])
+                departure_itinerary = self.createItinerary(ac=ac, px=pos_ini,
+                                                           pe=from_airport, pf=to_airport, py=pos_fin,
+                                                           t_ini=t_ini, t_free=t_free,
+                                                           key=f"{key}", next_possible_segments=[f"{key}"])
+                return_itinerary = self.createItinerary(ac=ac, px=pos_ini,
+                                                        pe=to_airport, pf=from_airport, py=pos_fin,
+                                                        t_ini=t_ini, t_free=t_free,
+                                                        key=f"{key}", next_possible_segments=[f"{key}"])
+
+                to_eval = randint(1, 1000)
+                if to_eval % 2 == 0:
                     aircraft_case.departureItineraryArray.append(departure_itinerary)
+                elif to_eval % 3 == 0:
+                    aircraft_case.returnItineraryArray.append(return_itinerary)
                 else:
-                    t_ini, pos_ini, pos_fin = self.generateTimeInitialAndPositions(self.df_days['ini'].loc[d])
-                    return_itinerary = self.createItinerary(ac=ac, px=pos_ini,
-                                                            pe=to_airport, pf=from_airport, py=pos_fin,
-                                                            t_ini=t_ini,
-                                                            key=f"{key}")
+                    aircraft_case.departureItineraryArray.append(departure_itinerary)
                     aircraft_case.returnItineraryArray.append(return_itinerary)
 
         return aircraft_case

@@ -1,11 +1,11 @@
-from typing import List, Self
+from typing import List
 from modeling.classes.Flight import Flight
 
 
 class ProcessedItinerary:
     key: str = None
-    segmentStart: int = None
-    segmentEnd: int = None
+    segmentStart: int = 0
+    segmentEnd: int = 0
     preReposition: Flight = None
     trip: Flight = None
     posReposition: Flight = None
@@ -23,7 +23,7 @@ class ProcessedItinerary:
             self.posReposition = Flight(**self.posReposition)
         if self.segmentEnd - self.segmentStart > 0:
             self.segmentTimeInMin = self.segmentEnd - self.segmentStart
-        else:
+        elif self.segmentEnd > 0 and self.segmentStart > 0:
             raise Exception(f"Invalid object for Processed Itinerary: segmentTimeInMin must be greater than zero, "
                             f"this means: segmentEnd - segmentStart > 0"
                             f"{self.segmentEnd} - {self.segmentStart} = "
@@ -47,7 +47,7 @@ class ProcessedItinerary:
     def preTripPosTimeInMin(self, ):
         return self.preReposition.timeInMin + self.trip.timeInMin + self.posReposition.timeInMin
 
-    def isNextPossibleSegmentOf(self, to_evaluate: Self):
+    def isNextPossibleSegmentOf(self, to_evaluate):
         return self.key in to_evaluate.nextPossibleSegments
 
     def __str__(self, ):
