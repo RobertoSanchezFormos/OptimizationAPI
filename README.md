@@ -1,6 +1,6 @@
 # REST API 
 
-## How to execute it (without Docker):
+## How to execute it (without Docker) - Python 3.8:
 1. In the terminal go to the root path of the project 
 2. Install the requirements:
 `pip3 install -r requirements.txt`
