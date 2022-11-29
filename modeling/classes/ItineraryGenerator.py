@@ -106,6 +106,7 @@ class ItineraryGenerator:
                                                         py=destiny_continuous, t_ini=t_ini, t_free=t_free,
                                                         max_time=self.df_days['end'].loc[d],
                                                         key=f"{_key}", next_possible_segments=continuous_segments_ids)
+                return_itinerary.segmentEnd = departure_itinerary.segmentEnd
                 # for the next continuous segments
                 continuous_segments_ids = continuous_segments_ids[1:]
 
@@ -125,6 +126,8 @@ class ItineraryGenerator:
                                                         t_ini=t_ini, t_free=t_free,
                                                         max_time=self.df_days['end'].loc[d],
                                                         key=f"{key}", next_possible_segments=[f"{key}"])
+
+                return_itinerary.segmentEnd = departure_itinerary.segmentEnd
 
                 to_eval = randint(1, 1000)
                 if to_eval % 2 == 0:

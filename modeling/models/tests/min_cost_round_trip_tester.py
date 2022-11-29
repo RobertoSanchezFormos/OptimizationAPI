@@ -24,12 +24,12 @@ def test():
     for case in study_case:
         print(case.processedAircraft)
         print(case)
-    solver_results, model, summary_list = minCostRoundTripModel.run_model(study_case, n_best=1)
+    solver_results, model, summary_list = minCostRoundTripModel.run_model(study_case, n_best=4)
 
     if solver_results is None:
         print('======\n\nERROR: Invalid data for this study case.')
     else:
-        print_results(solver_results, model, print_model=False)
+        print_results(solver_results, model, print_model=True)
         for ix, summary in enumerate(summary_list):
             print(f'# ==========================================================\nSolution {ix+1}')
             print(summary)

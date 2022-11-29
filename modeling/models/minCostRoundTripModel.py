@@ -91,7 +91,7 @@ def run_model(data: List[ProcessedAircraftData], n_best: int = 1) -> Union[Tuple
 
             if departure_itinerary.key == return_itinerary.key:
                 # they belong to the same segment: pre + trip + pos should be inside the segment
-                if departure_itinerary.preTripTimeInMin() + return_itinerary.tripPosTimeInMin() < return_itinerary.segmentTimeInMin:
+                if departure_itinerary.preTripTimeInMin() + return_itinerary.tripPosTimeInMin() > return_itinerary.segmentTimeInMin:
                     # this schedule does not fit
                     return m.bs[ac1, ac2, it_i, it_j] == 0
             elif departure_itinerary.segmentEnd > return_itinerary.segmentStart:
